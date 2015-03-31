@@ -4,6 +4,7 @@ The backup is done as follows:
 * keeps X months per year
 * each month keeps the last Y backup days
 * each product backs up:
+  * specified files (with/out) wildcards in the backup config 
   * specified folders in the backup config
   * specified databases in the backup config
   * the backup days and months can be customized per project
@@ -19,6 +20,7 @@ The backup is done as follows:
 	    keep:
 	      days: 5
 	      month: 6
+	    files: [/folder/*.csv,/folder/toto.sh]
 	    folders: [/var/www/mica.org]
 	    databases:
 	      names: [mica]
