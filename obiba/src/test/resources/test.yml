@@ -1,0 +1,5 @@
+projects:
+  opal:
+    folders: [a, b, c]
+  mica:
+    folders: [d, e, f]
