@@ -113,14 +113,18 @@ class ObibaBackup:
             print "\tBacking up file %s to %s" % (file, destination)
             for fileItem in glob.glob(file):
                 if os.path.isfile(fileItem):
-                    shutil.copy(fileItem, destination)
+                    destinationPath = os.path.join(destination, os.path.dirname(fileItem)[1:])
+                    os.makedirs(destinationPath)
+                    shutil.copy(fileItem, destinationPath)
 
     ####################################################################################################################
     def __backupFolders(self, folders, destination):
         for folder in folders:
             print "\tBacking up folder %s to %s" % (folder, destination)
             filename = "%s.tar.gz" % (os.path.basename(folder))
-            backupFile = os.path.join(destination, filename)
+            destinationPath = os.path.join(destination, folder[1:])
+            os.makedirs(destinationPath)
+            backupFile = os.path.join(destinationPath, filename)
             result = call(["tar", "czfP", backupFile, folder])
             if result != 0:
                 print "Failed to tar %s" % backupFile
@@ -154,7 +158,6 @@ class ObibaBackup:
         backupFile = os.path.join(destination, filename)
 
         dumpCommand = ["mysqldump", "-u", usr, "-p" + pwd, database]
-        print "DEBUG %s" % dumpCommand
         dumpProcess = subprocess.Popen(dumpCommand, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         dumpOutput = dumpProcess.communicate()[0]
 
