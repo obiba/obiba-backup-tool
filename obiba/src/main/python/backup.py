@@ -113,16 +113,18 @@ class ObibaBackup:
             print "\tBacking up file %s to %s" % (file, destination)
             for fileItem in glob.glob(file):
                 if os.path.isfile(fileItem):
-                    destinationPath = os.path.join(destination, os.path.dirname(fileItem)[1:])
+                  destinationPath = os.path.join(destination, os.path.dirname(fileItem)[1:])
+                  if not os.path.exists(destinationPath):
                     os.makedirs(destinationPath)
-                    shutil.copy(fileItem, destinationPath)
+                  shutil.copy(fileItem, destinationPath)
 
     ####################################################################################################################
     def __backupFolders(self, folders, destination):
         for folder in folders:
             print "\tBacking up folder %s to %s" % (folder, destination)
             filename = "%s.tar.gz" % (os.path.basename(folder))
-            destinationPath = os.path.join(destination, folder[1:])
+            if not os.path.exists(destinationPath):
+              destinationPath = os.path.join(destination, folder[1:])
             os.makedirs(destinationPath)
             backupFile = os.path.join(destinationPath, filename)
             result = call(["tar", "czfP", backupFile, folder])
