@@ -123,9 +123,9 @@ class ObibaBackup:
         for folder in folders:
             print "\tBacking up folder %s to %s" % (folder, destination)
             filename = "%s.tar.gz" % (os.path.basename(folder))
+            destinationPath = os.path.join(destination, folder[1:])
             if not os.path.exists(destinationPath):
-              destinationPath = os.path.join(destination, folder[1:])
-            os.makedirs(destinationPath)
+              os.makedirs(destinationPath)
             backupFile = os.path.join(destinationPath, filename)
             result = call(["tar", "czfP", backupFile, folder])
             if result != 0:
