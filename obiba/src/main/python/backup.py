@@ -160,10 +160,11 @@ class ObibaBackup:
         subprocess.check_output(
             [
                 'mongodump',
-                '-host', '%s' % host,
+                '--host', '%s' % host,
                 '-d', '%s' % mongodb,
                 '--port', '%s' % port,
-                '-o', '%s' % destination
+                '-o', '%s' % destination,
+                '--gzip'
             ])
 
     ####################################################################################################################
