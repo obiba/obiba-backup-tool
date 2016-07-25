@@ -35,6 +35,7 @@ class ObibaBackup:
             self.__loadConfig()
             self.__setup()
             self.__backupProjects()
+            self.__backupToRemoteServer()
         except Exception, e:
             print '*' * 80
             print "* ERROR"
@@ -76,6 +77,23 @@ class ObibaBackup:
         for project in self.config['projects'].iterkeys():
             print "Backing up %s..." % project
             self.__backupProject(self.config['projects'][project], project)
+
+    ####################################################################################################################
+    def __backupToRemoteServer(self):
+        if 'rsync' in self.config and 'destination' in self.config['rsync']:
+            print "Backing up to remote server %s..." % self.config['rsync']['destination']
+
+            result = subprocess.check_output(
+              [
+                  'rsync',
+                  '-Atrave',
+                  'ssh -i %s' % self.config['rsync']['pem'],
+                  self.config['destination'],
+                  self.config['rsync']['destination']
+              ]
+            )
+
+            print result
 
     ####################################################################################################################
     def __backupProject(self, project, projectName):
@@ -139,7 +157,7 @@ class ObibaBackup:
     ####################################################################################################################
     def __backupMongodb(self, mongodb, destination, host, port):
         print "\tBacking up mongodb %s to %s" % (mongodb, destination)
-        dumpOutput = subprocess.check_output(
+        subprocess.check_output(
             [
                 'mongodump',
                 '-host', '%s' % host,
