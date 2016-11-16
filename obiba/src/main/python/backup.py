@@ -80,9 +80,10 @@ class ObibaBackup:
 
     ####################################################################################################################
     def __backupProjects(self):
-        for project in self.config['projects'].iterkeys():
-            print "Backing up %s..." % project
-            self.__backupProject(self.config['projects'][project], project)
+        if 'projects' in self.config:
+            for project in self.config['projects'].iterkeys():
+                print "Backing up %s..." % project
+                self.__backupProject(self.config['projects'][project], project)
 
     ####################################################################################################################
     def __backupProject(self, project, projectName):
