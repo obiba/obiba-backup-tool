@@ -34,8 +34,8 @@ class ObibaBackup:
             print "# Obiba backup started (%s)" % datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             self.__loadConfig()
             self.__setup()
+            self.__backupRemoteProjects()
             self.__backupProjects()
-            self.__backupToRemoteServer()
         except Exception, e:
             print '*' * 80
             print "* ERROR"
@@ -66,34 +66,23 @@ class ObibaBackup:
         # create the project based backup folder
         today = date.today()
 
-        for project in self.config['projects'].iterkeys():
-            timestamp = datetime.now().strftime('%d-%H-%M-%S')
-            backupDestination = os.path.join(backupFolder, project, str(today.year), today.strftime('%m'), timestamp)
-            self.__createBackupFolder(backupDestination)
-            self.config['projects'][project]['destination'] = backupDestination
+        if 'projects' in self.config:
+            for project in self.config['projects'].iterkeys():
+                timestamp = datetime.now().strftime('%d-%H-%M-%S')
+                backupDestination = os.path.join(backupFolder, project, str(today.year), today.strftime('%m'), timestamp)
+                self.__createBackupFolder(backupDestination)
+                self.config['projects'][project]['destination'] = backupDestination
+
+    ####################################################################################################################
+    def __backupRemoteProjects(self):
+        for source in self.config['rsyncs']:
+            self.__backupToRemoteServer(source, os.path.basename(source))
 
     ####################################################################################################################
     def __backupProjects(self):
         for project in self.config['projects'].iterkeys():
             print "Backing up %s..." % project
             self.__backupProject(self.config['projects'][project], project)
-
-    ####################################################################################################################
-    def __backupToRemoteServer(self):
-        if 'rsync' in self.config and 'destination' in self.config['rsync']:
-            print "Backing up to remote server %s..." % self.config['rsync']['destination']
-
-            result = subprocess.check_output(
-              [
-                  'rsync',
-                  '-Atrave',
-                  'ssh -i %s' % self.config['rsync']['pem'],
-                  self.config['destination'],
-                  self.config['rsync']['destination']
-              ]
-            )
-
-            print result
 
     ####################################################################################################################
     def __backupProject(self, project, projectName):
@@ -107,6 +96,25 @@ class ObibaBackup:
             self.__backupMongodbs(project['mongodbs'], destination)
         if 'databases' in project:
             self.__backupDatabases(project['databases'], destination)
+
+        self.__backupToRemoteServer(destination, projectName)
+
+    ####################################################################################################################
+    def __backupToRemoteServer(self, source, folder):
+        if 'rsync' in self.config and 'destination' in self.config['rsync']:
+            print "Backing up %s to remote server %s..." % (source, self.config['rsync']['destination'])
+            print "rsync -Atrave 'ssh -i %s' %s %s" % (self.config['rsync']['pem'], source, "%s/%s" % (self.config['rsync']['destination'], folder))
+            result = subprocess.check_output(
+              [
+                  'rsync',
+                  '-Atrave',
+                  'ssh -i %s' % self.config['rsync']['pem'],
+                  source,
+                  self.config['rsync']['destination']
+              ]
+            )
+
+            print result
 
     ####################################################################################################################
     def __cleanup(self, destination, project):
