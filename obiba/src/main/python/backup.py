@@ -75,8 +75,9 @@ class ObibaBackup:
 
     ####################################################################################################################
     def __backupRemoteProjects(self):
-        for source in self.config['rsyncs']:
-            self.__backupToRemoteServer(source, os.path.basename(source))
+        if 'rsyncs' in self.config:
+            for source in self.config['rsyncs']:
+                self.__backupToRemoteServer(source, os.path.basename(source))
 
     ####################################################################################################################
     def __backupProjects(self):
@@ -103,15 +104,17 @@ class ObibaBackup:
     ####################################################################################################################
     def __backupToRemoteServer(self, source, folder):
         if 'rsync' in self.config and 'destination' in self.config['rsync']:
+            source = os.path.join(source, '')
+            destination = "%s/%s" % (self.config['rsync']['destination'], folder)
             print "Backing up %s to remote server %s..." % (source, self.config['rsync']['destination'])
-            print "rsync -Atrave 'ssh -i %s' %s %s" % (self.config['rsync']['pem'], source, "%s/%s" % (self.config['rsync']['destination'], folder))
+            print "rsync -Atrave 'ssh -i %s' %s %s" % (self.config['rsync']['pem'], source, destination)
             result = subprocess.check_output(
               [
                   'rsync',
                   '-Atrave',
                   'ssh -i %s' % self.config['rsync']['pem'],
                   source,
-                  self.config['rsync']['destination']
+                  destination
               ]
             )
 
@@ -178,8 +181,21 @@ class ObibaBackup:
 
     ####################################################################################################################
     def __backupDatabases(self, databases, destination):
-        for database in databases['names']:
+        if 'prefix' in databases:
+            names = self.__listDatabases(databases['prefix'], databases['usr'], databases['pwd'])
+        else:
+            names = databases['names']
+
+        for database in names:
             self.__backupDatabase(database, destination, databases['usr'], databases['pwd'])
+
+    ####################################################################################################################
+    def __listDatabases(self, prefix, usr, pwd):
+        matchingCommand = "SHOW DATABASES LIKE '" + prefix + "'"
+        listCommand = ["mysql", "-u", usr, "-p" + pwd, "-B", "-N", "-e", matchingCommand]
+        listProcess = subprocess.Popen(listCommand, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        listOutput = listProcess.communicate()[0]
+        return listOutput.rstrip().split('\n')
 
     ####################################################################################################################
     def __backupDatabase(self, database, destination, usr, pwd):
