@@ -59,8 +59,11 @@ To send a collection of folders outside of the backup destination folder add the
 	  month: 3
 	...
 	rsyncs:
-	  - /var/my/folder
-	  - /etc/my/folder
+	  - folder:
+	    path: /var/my/folder
+	    excludes: [/toto,/tata]
+	  - folder:
+	    path: /etc/my/folder
 	  - ...
 	rsync:
 	  destination: user@backup-server.blabla.ca:/data/local-server

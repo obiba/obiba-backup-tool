@@ -76,8 +76,9 @@ class ObibaBackup:
     ####################################################################################################################
     def __backupRemoteProjects(self):
         if 'rsyncs' in self.config:
-            for source in self.config['rsyncs']:
-                self.__backupToRemoteServer(source, os.path.basename(source))
+            for rsync in self.config['rsyncs']:
+                if 'folder' in rsync:
+                    self.__backupToRemoteServer(rsync['folder'])
 
     ####################################################################################################################
     def __backupProjects(self):
@@ -102,20 +103,32 @@ class ObibaBackup:
         self.__backupToRemoteServer(destination, projectName)
 
     ####################################################################################################################
-    def __backupToRemoteServer(self, source, folder):
+    def __backupToRemoteServer(self, source):
         if 'rsync' in self.config and 'destination' in self.config['rsync']:
-            source = os.path.join(source, '')
+            excludes = []
+            if 'excludes' in source:
+                for exclude in source['excludes']:
+                    excludes.append('--exclude')
+                    excludes.append('%s' % exclude)
+
+            folder = os.path.basename(source['path'])
+            source = os.path.join(source['path'], '')
             destination = "%s/%s" % (self.config['rsync']['destination'], folder)
+            publicKey = ''
+
+            if 'pem' in self.config['rsync']:
+                publicKey = "ssh -i %s" % self.config['rsync']['pem']
+
             print "Backing up %s to remote server %s..." % (source, self.config['rsync']['destination'])
-            print "rsync -Atrave 'ssh -i %s' %s %s" % (self.config['rsync']['pem'], source, destination)
+            print "rsync -Atrave '%s' %s %s %s" % (publicKey, ' '.join(str(x) for x in excludes), source, destination)
             result = subprocess.check_output(
               [
                   'rsync',
                   '-Atrave',
-                  'ssh -i %s' % self.config['rsync']['pem'],
+                  publicKey,
                   source,
                   destination
-              ]
+              ] + excludes
             )
 
             print result
