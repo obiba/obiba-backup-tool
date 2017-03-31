@@ -61,7 +61,7 @@ To send a collection of folders outside of the backup destination folder add the
 	rsyncs:
 	  - folder:
 	    path: /var/my/folder
-	    excludes: [/toto,/tata]
+	    excludes: [/toto,/tata]  # must be relative paths and cannot start with wildcards
 	  - folder:
 	    path: /etc/my/folder
 	  - ...
