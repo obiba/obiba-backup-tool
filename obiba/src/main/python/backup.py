@@ -100,12 +100,10 @@ class ObibaBackup:
         if 'databases' in project:
             self.__backupDatabases(project['databases'], destination)
 
-        source = {}
-        source['path'] = destination
-        self.__backupToRemoteServer(source, projectName)
+        self.__backupToRemoteServer(destination, projectName)
 
     ####################################################################################################################
-    def __backupToRemoteServer(self, source, targetFolder):
+    def __backupToRemoteServer(self, source):
         if 'rsync' in self.config and 'destination' in self.config['rsync']:
             excludes = []
             if 'excludes' in source:
@@ -113,11 +111,7 @@ class ObibaBackup:
                     excludes.append('--exclude')
                     excludes.append('%s' % exclude)
 
-            if targetFolder is None:
-                folder = os.path.basename(source['path'])
-            else:
-                folder = targetFolder
-
+            folder = os.path.basename(source['path'])
             source = os.path.join(source['path'], '')
             destination = "%s/%s" % (self.config['rsync']['destination'], folder)
             publicKey = ''
@@ -256,4 +250,3 @@ class ObibaBackup:
 
 if __name__ == "__main__":
     ObibaBackup().run()
-
