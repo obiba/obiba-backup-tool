@@ -24,8 +24,15 @@ The backup is done as follows:
 	    files: [/folder/*.csv,/folder/toto.sh]
 	    folders: [/var/www/mica.org]
 	    mongodbs:
+	      names: [mica_data] #Comma seperated list of database names
+	      #Assume all databases have the same connection and security settings
 	      host: localhost
 	      port: 27017
+	      usr: micaadmin
+	      pwd: '1234'
+      	      authenticationDatabase: admin #The mongo database used to authenticate users
+              output: archive #Dump to a single archive file (comment out to dump to folder)
+              sslPEMKeyFile: /path/to/PEMkeyFile #Comment out if SSL is not required	      
 	    databases:
 	      names: [mica]
 	      usr: dbadmin
