@@ -3,12 +3,12 @@
 ####################################################################################################################
 # 'backup.py' is a simple script used to backup Obiba products on a server.
 #
-# The backup is done as follows:
-#   - keeps two months per year
-#   - each month keeps the last five backup days
-#   - each product backs up:
-#       - specified folders in the backup config
-#       - specified databases in the backup config
+# For each project, files, folders and databases (MySQL and MongoDB) are backed up as specified in the backup.conf. 
+# Backups are stored in date structured directory (e.g. destination/project/year/month/day&time/)
+# A clean up schedule deletes old backups as specified in the backup.conf
+# The current local backup is copied to a remote backup location
+# Additional folders may also be copied to the remote  backup location
+#
 ####################################################################################################################
 
 import os
@@ -21,7 +21,7 @@ import shutil
 import traceback
 import yaml
 import glob
-
+import shlex
 
 class ObibaBackup:
     CONFIG_FILE = os.path.join(os.path.dirname(__file__), "backup.conf")
@@ -178,21 +178,33 @@ class ObibaBackup:
 
     ####################################################################################################################
     def __backupMongodbs(self, mongodbs, destination):
+        #Build the mongodump command based on the config. Config file struture assumes settings are the same for all databases
+        mongocommand = 'mongodump --host ' + str(mongodbs['host']) + ' --port ' +  str(mongodbs['port']) + ' '
+        if 'usr' in mongodbs and 'pwd' in mongodbs:
+            mongocommand += '--username ' + str(mongodbs['usr']) + ' --password ' +  str(mongodbs['pwd']) + ' '
+        if 'authenticationDatabase' in mongodbs:
+            mongocommand += '--authenticationDatabase ' + str(mongodbs['authenticationDatabase']) + ' '
+        if 'sslPEMKeyFile' in mongodbs:
+            mongocommand += '--ssl --sslPEMKeyFile ' + str(mongodbs['sslPEMKeyFile']) + ' '
+        output_type = '--archive=' if ('output' in mongodbs and 'archive' == mongodbs['output']) else '--out='
+        output_type += destination
+        #Run command for each database in the config file
         for mongodb in mongodbs['names']:
-            self.__backupMongodb(mongodb, destination, mongodbs['host'], mongodbs['port'])
+            print "\tBacking up mongodb %s to %s" % (mongodb, destination)
+            self.__backupMongodb(mongodb, mongocommand, output_type)
 
     ####################################################################################################################
-    def __backupMongodb(self, mongodb, destination, host, port):
-        print "\tBacking up mongodb %s to %s" % (mongodb, destination)
-        subprocess.check_output(
-            [
-                'mongodump',
-                '--host', '%s' % host,
-                '-d', '%s' % mongodb,
-                '--port', '%s' % port,
-                '-o', '%s' % destination,
-                '--gzip'
-            ])
+    def __backupMongodb(self, mongodb, mongocommand, output_type):
+        #Complete the database specific commands
+        if output_type[:9] == "--archive":
+            output_type += os.sep + mongodb + '.tar.gz '
+        else:
+            output_type += os.sep + mongodb + ' '
+        mongocommand += output_type + ' --gzip ' + ' --db ' + mongodb + ' '
+        #Convert command string to list
+        safe_args = shlex.split(mongocommand)
+        #Execute os command
+        subprocess.check_output(safe_args)
 
     ####################################################################################################################
     def __backupDatabases(self, databases, destination):
