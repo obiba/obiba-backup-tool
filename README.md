@@ -38,7 +38,12 @@ The backup is done as follows:
 	      usr: dbadmin
 	      pwd: '123456'
 	  opal:
-	    folders: [/var/lib/opal/,/var/log/opal/]
+	    folders: # Instead of simple list, all folders can be specified with a path and zero or more excluded subfolders
+	      - folder:
+		path: /var/my/folder
+		excludes: [toto,tata]  # must be relative paths and cannot start with wildcards
+	      - folder:
+		path: /etc/my/folder
 	    databases:
 	      names: [opal_key,opal_data]
 	      usr: dbadmin

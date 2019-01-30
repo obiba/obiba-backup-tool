@@ -165,17 +165,34 @@ class ObibaBackup:
 
     ####################################################################################################################
     def __backupFolders(self, folders, destination):
-        for folder in folders:
-            print "\tBacking up folder %s to %s" % (folder, destination)
-            filename = "%s.tar.gz" % (os.path.basename(folder))
-            destinationPath = os.path.join(destination, folder[1:])
+        for folder_item in folders:
+            excludes = []
+            if 'folder' in folder_item:
+                #Using hierarchical folder structure 
+                if 'path' in folder_item['folder']:
+                    folder_path = folder_item['folder']['path']
+                    
+                    if 'excludes' in folder_item['folder']:
+                        for exclude in folder_item['folder']['excludes']:
+                            if not (os.path.exists(exclude) or os.path.exists(os.path.join(folder_path,exclude))):
+                                print "\tExclude path %s not found, check the config entry is correct" % exclude 
+                            excludes.append('--exclude=%s' % exclude)
+            else:
+                #Using simple folder list
+                folder_path = folder_item
+                
+            print "\tBacking up folder %s to %s" % (folder_path, destination)
+            filename = "%s.tar.gz" % (os.path.basename(folder_path))
+                            
+            destinationPath = os.path.join(destination, folder_path[1:])
             if not os.path.exists(destinationPath):
               os.makedirs(destinationPath)
             backupFile = os.path.join(destinationPath, filename)
-            result = call(["tar", "czfP", backupFile, folder])
+            #print ' '.join(str(x) for x in ["tar", "czfP", backupFile, folder_path] + excludes)
+            result = call(["tar", "czfP", backupFile, folder_path] + excludes) 
             if result != 0:
                 print "Failed to tar %s" % backupFile
-
+                        
     ####################################################################################################################
     def __backupMongodbs(self, mongodbs, destination):
         #Build the mongodump command based on the config. Config file struture assumes settings are the same for all databases
