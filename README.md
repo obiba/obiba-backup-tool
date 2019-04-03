@@ -30,7 +30,7 @@ The backup is done as follows:
 	      port: 27017
 	      usr: micaadmin
 	      pwd: '1234'
-      	      authenticationDatabase: admin #The mongo database used to authenticate users
+              authenticationDatabase: admin #The mongo database used to authenticate users
               output: archive #Dump to a single archive file (comment out to dump to folder)
               sslPEMKeyFile: /path/to/PEMkeyFile #Comment out if SSL is not required	      
 	    databases:
